@@ -1,4 +1,3 @@
-import cv2 as cv
 import io
 from itertools import chain
 import math
@@ -476,13 +475,13 @@ def render_quantized_image(k, colors, filename):
     st.image(quantized_image,
              caption=f'Color Quantization with {k} Clusters', use_column_width=True)
 
-    is_success, buffer = cv.imencode(".jpg", quantized_image[:, :, ::-1])
-    io_buf = io.BytesIO(buffer)
-    quantized_jpg = io_buf.read()
-
     output_filename = filename.strip('.jpg') + '_quantized.jpg'
 
-    st.download_button('Download Image', quantized_jpg, file_name=output_filename)
+    byte_array = io.BytesIO()
+    quantized_jpg = Image.fromarray(quantized_image)
+    quantized_jpg.save(byte_array, format='jpeg')
+    byte_array = byte_array.getvalue()
+    st.download_button('Download Image', byte_array, file_name=output_filename)
 
 
 # ===================================================================================================================
