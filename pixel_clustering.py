@@ -439,27 +439,40 @@ def render_color_pickers():
 
     columns = st.columns(k)
 
-    st.session_state['colors'] = [None] * k
+    colors = []
 
     for i in range(k):
         with columns[i]:
-            st.session_state['colors'][i] = st.color_picker(
+            colors.append(st.color_picker(
                 f'Cluster {i}',
                 float_tuple_to_hex(
                     tuple(st.session_state[f'clustering_{k}'].cluster_centers_[i])
                 )
-            )
+            ))
+
+    return colors
 
 
-def render_quantized_image(filename):
-    k = st.session_state['k']
+@st.cache(show_spinner=False)
+def get_quantized_image(k, colors):
 
-    print(f'Rendering quantized image with {k} colors')
+    with st.spinner('Loading quantized image. Please wait.'):
 
-    rgb_colors = np.array([hex_to_float_tuple(c) for c in st.session_state['colors']])
+        print(f'Rendering quantized image with {k} colors')
 
-    quantized_image = rgb_colors[st.session_state[f'clustering_{k}'].labels_]
-    quantized_image = quantized_image.reshape(st.session_state['width'], st.session_state['height'], 3).astype('uint8')
+        rgb_colors = np.array([hex_to_float_tuple(c) for c in colors])
+
+        quantized_image = rgb_colors[st.session_state[f'clustering_{k}'].labels_]
+        quantized_image = quantized_image.reshape(st.session_state['width'],
+                                                  st.session_state['height'], 3).astype('uint8')
+
+        return quantized_image
+
+
+def render_quantized_image(k, colors, filename):
+
+    quantized_image = get_quantized_image(k, colors)
+    
     st.image(quantized_image,
              caption=f'Color Quantization with {k} Clusters', use_column_width=True)
 
@@ -499,8 +512,8 @@ def render_app():
                  'versions of the original image.')
 
         st.write('**Use the color pickers to style your image and save it using the download button below!**')
-        render_color_pickers()
-        render_quantized_image(uploaded_file.name)
+        colors = render_color_pickers()
+        render_quantized_image(st.session_state['k'], colors, uploaded_file.name)
 
 
 render_app()
