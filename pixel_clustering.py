@@ -113,9 +113,7 @@ def cluster(image, k):
 def render_distribution_section(image):
     st.header('Clusters in RGB Space')
 
-    k = st.slider(label='# of Clusters', min_value=1, max_value=MAX_K, step=1, value=2)
-    st.session_state['k'] = k
-    cluster(image, k)
+    render_k_slider(image)
 
     plot_pixels = st.slider('# of Pixels to Plot', min_value=0, max_value=1000, value=500, step=10)
     num_centroids = st.session_state['k'] if st.checkbox('Show centroids', value=True) else 0
@@ -126,6 +124,12 @@ def render_distribution_section(image):
              'that are offset from this line, but still are parallel to R=G=B.  These can be interpreted as hues '
              'in the image that fall under different lighting and shadows.  These patterns provide a good '
              'motivation to also try modeling in HSV or HSL space.')
+
+
+def render_k_slider(image):
+    k = st.slider(label='# of Clusters', min_value=1, max_value=MAX_K, step=1, value=2)
+    st.session_state['k'] = k
+    cluster(image, k)
 
 
 @st.cache(show_spinner=False)
@@ -453,7 +457,9 @@ def render_color_pickers():
 
 
 @st.cache(show_spinner=False)
-def get_quantized_image(k, colors):
+def get_quantized_image(colors):
+
+    k = len(colors)
 
     with st.spinner('Loading quantized image. Please wait.'):
 
@@ -470,7 +476,7 @@ def get_quantized_image(k, colors):
 
 def render_quantized_image(k, colors, filename):
 
-    quantized_image = get_quantized_image(k, colors)
+    quantized_image = get_quantized_image(colors)
     
     st.image(quantized_image,
              caption=f'Color Quantization with {k} Clusters', use_column_width=True)
@@ -489,6 +495,8 @@ def render_quantized_image(k, colors, filename):
 
 def render_app():
     st.set_page_config(page_title='Pixel Clustering', page_icon=':large_blue_circle:')
+    if 'artwork_mode' not in st.session_state:
+        st.session_state['artwork_mode'] = False
 
     st.title('Pixel Clustering with K Means')
     st.subheader('By Preston Dunton')
@@ -501,9 +509,10 @@ def render_app():
     if image is not None:
         st.image(image, caption='Uploaded Image.', use_column_width=True)
 
-        render_distribution_section(image)
+        if not st.session_state['artwork_mode']:
+            render_distribution_section(image)
 
-        render_tree_section()
+            render_tree_section()
 
         st.header('Color quantization')
         st.write('Now for the fun part!  If we reassign each pixel\'s color to the color of its nearest centroid, we '
@@ -511,6 +520,13 @@ def render_app():
                  'versions of the original image.')
 
         st.write('**Use the color pickers to style your image and save it using the download button below!**')
+        columns = st.columns(2)
+        with columns[0]:
+            st.checkbox('Enable artwork mode', value=False, key='artwork_mode')
+        with columns[1]:
+            st.write('Artwork mode hides the plots and diagrams above so that you can edit the image faster.')
+        if st.session_state['artwork_mode']:
+            render_k_slider(image)
         colors = render_color_pickers()
         render_quantized_image(st.session_state['k'], colors, uploaded_file.name)
 
