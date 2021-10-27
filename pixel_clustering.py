@@ -504,9 +504,9 @@ def render_app():
     render_introduction()
 
     uploaded_file = st.file_uploader("Choose an image...", type=['jpg', 'jpeg'])
-    image = init_file(uploaded_file)
 
-    if image is not None:
+    if uploaded_file is not None:
+        image = init_file(uploaded_file)
         st.image(image, caption='Uploaded Image.', use_column_width=True)
 
         if not st.session_state['artwork_mode']:
