@@ -75,25 +75,24 @@ def render_introduction():
 @st.cache(show_spinner=False)
 def init_file(uploaded_file):
     with st.spinner('Initializing application.  Please wait.'):
-        if uploaded_file is not None:
 
-            print(f'Initializing uploaded image "{uploaded_file.name}"')
+        print(f'Initializing uploaded image "{uploaded_file.name}"')
 
-            image = np.array(Image.open(uploaded_file))
-            st.session_state['width'] = image.shape[0]
-            st.session_state['height'] = image.shape[1]
-            st.session_state['total_pixels'] = image.shape[0] * image.shape[1]
+        image = np.array(Image.open(uploaded_file))
+        st.session_state['width'] = image.shape[0]
+        st.session_state['height'] = image.shape[1]
+        st.session_state['total_pixels'] = image.shape[0] * image.shape[1]
 
-            print(f'\tSetting (width, height) to {(st.session_state["width"], st.session_state["height"])}')
+        print(f'\tSetting (width, height) to {(st.session_state["width"], st.session_state["height"])}')
 
-            for i in range(1, MAX_K + 1):
-                st.session_state[f'clustering_{i}'] = None
+        for i in range(1, MAX_K + 1):
+            st.session_state[f'clustering_{i}'] = None
 
-            cluster(image, k=1)
-            cluster(image, k=2)
-            st.session_state['k'] = 2
+        cluster(image, k=1)
+        cluster(image, k=2)
+        st.session_state['k'] = 2
 
-            return image
+        return image
 
 
 def cluster(image, k):
