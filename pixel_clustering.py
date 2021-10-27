@@ -73,12 +73,14 @@ def render_introduction():
 
 
 def init_file(uploaded_file):
-    
+
     image = np.array(Image.open(uploaded_file))
 
-    if 'clustering_1' not in st.session_state:
+    if st.session_state['file_name'] != uploaded_file.name:
         with st.spinner('Initializing application.  Please wait.'):
+
             print(f'Initializing uploaded image "{uploaded_file.name}"')
+            st.session_state['file_name'] = uploaded_file.name
 
             st.session_state['width'] = image.shape[0]
             st.session_state['height'] = image.shape[1]
@@ -493,10 +495,15 @@ def render_quantized_image(k, colors, filename):
 # ===================================================================================================================
 
 
-def render_app():
+def init_app():
     st.set_page_config(page_title='Pixel Clustering', page_icon=':large_blue_circle:')
     if 'artwork_mode' not in st.session_state:
         st.session_state['artwork_mode'] = False
+    if 'file_name' not in st.session_state:
+        st.session_state['file_name'] = ''
+
+
+def render_app():
 
     st.title('Pixel Clustering with K Means')
     st.subheader('By Preston Dunton')
@@ -531,4 +538,5 @@ def render_app():
         render_quantized_image(st.session_state['k'], colors, uploaded_file.name)
 
 
+init_app()
 render_app()
