@@ -134,7 +134,7 @@ def render_k_slider(image):
     cluster(image, k)
 
 
-@st.cache(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def get_pixel_plot(image, plot_pixels, k=0):
     with st.spinner('Loading pixel plot.  Please wait.'):
         print(f'Rendering pixel plot with {plot_pixels} pixels and {k} centroids')
@@ -150,9 +150,14 @@ def get_pixel_plot(image, plot_pixels, k=0):
 
         if k > 0:
             # Add centroids
-            for color in st.session_state[f'clustering_{k}'].cluster_centers_:
-                pixels = pixels.append({'R': color[0], 'G': color[1], 'B': color[2],
-                                        'size': 5, 'Type': 'Centroid'}, ignore_index=True)
+            centroids = [{'R': color[0], 
+                          'G': color[1], 
+                          'B': color[2], 
+                          'size': 5, 
+                          'Type': 'Centroid'} 
+                          for color in st.session_state[f'clustering_{k}'].cluster_centers_]
+            pixels = pd.concat([pixels, pd.DataFrame(centroids)])
+            #     pixels = pixels.append(, ignore_index=True) CONCAT
             max_size = 15
         else:
             max_size = 7
@@ -200,7 +205,6 @@ def render_tree_section():
     st.plotly_chart(get_centroid_animation(clusterings, edges), use_container_width=True)
 
 
-@st.cache(show_spinner=False)
 def get_centroid_tree(clusterings):
     with st.spinner('Loading centroid hierarchy.  Please wait.'):
         print('Rendering centroid tree')
@@ -299,6 +303,7 @@ def create_nodes(edges):
     for k in range(1, MAX_K + 1):
         if st.session_state[f'clustering_{k}'] is not None:
             if previous_row_ordering is not None:
+                print(f'{dir(edges[0])}')
                 current_row_ordering = [[edge.target for edge in edges if edge.source == node] for node in
                                         previous_row_ordering]
                 current_row_ordering = list(chain.from_iterable(current_row_ordering))
@@ -335,7 +340,6 @@ def create_nodes(edges):
     return nodes
 
 
-@st.cache(show_spinner=False)
 def get_centroid_animation(clusterings, edges):
     with st.spinner('Loading hierarchy animation.  Please wait.'):
         clustering_ks = [len(clusterings[i].cluster_centers_)
@@ -370,7 +374,7 @@ def get_centroid_animation(clusterings, edges):
 
 def create_animation_frames(clustering_ks, edges, steps_per_frame):
     print('Creating animation frames')
-    frames = pd.DataFrame(columns=['R', 'G', 'B', 'frame', 'centroid'])
+    frames = []
 
     leaf_edges = [edge for edge in edges if edge.target not in [edge.source for edge in edges]]
 
@@ -395,23 +399,23 @@ def create_animation_frames(clustering_ks, edges, steps_per_frame):
 
                 frame_color = st.session_state[f'clustering_{ancestor_k}'].cluster_centers_[ancestor_i]
 
-                frames = frames.append({'R': frame_color[0], 'G': frame_color[1], 'B': frame_color[2],
-                                        'frame': frames_recorded, 'centroid': leaf_edge.target},
-                                       ignore_index=True)
+                frames.append({'R': frame_color[0], 'G': frame_color[1], 'B': frame_color[2],
+                                        'frame': frames_recorded, 'centroid': leaf_edge.target})
                 frames_recorded += 1
 
-        frame_color = st.session_state[f'clustering_{leaf_k}'].cluster_centers_[leaf_i]
-        frames = frames.append({'R': frame_color[0], 'G': frame_color[1], 'B': frame_color[2],
-                                'frame': frames_recorded, 'centroid': leaf_edge.target},
-                               ignore_index=True)
 
+        frame_color = st.session_state[f'clustering_{leaf_k}'].cluster_centers_[leaf_i]
+        frames.append({'R': frame_color[0], 'G': frame_color[1], 'B': frame_color[2],
+                                'frame': frames_recorded, 'centroid': leaf_edge.target})
+        
+    frames = pd.DataFrame(frames)
     frames = interpolate_frames(frames, steps_per_frame)
 
     return frames
 
 
 def interpolate_frames(frames, steps_per_frame):
-    new_frames = pd.DataFrame(columns=['R', 'G', 'B', 'frame', 'centroid'])
+    new_frames = []
 
     frames['frame'] *= steps_per_frame
     max_frame = frames['frame'].max()
@@ -431,10 +435,10 @@ def interpolate_frames(frames, steps_per_frame):
             step_color = ((end_color - start_color) * ((i % steps_per_frame) / steps_per_frame)) + start_color
             step_color = step_color[0]
 
-            new_frames = new_frames.append({'R': step_color[0], 'G': step_color[1], 'B': step_color[2],
-                                            'frame': i, 'centroid': centroid}, ignore_index=True)
+            new_frames.append({'R': step_color[0], 'G': step_color[1], 'B': step_color[2],
+                                            'frame': i, 'centroid': centroid})
 
-    return new_frames
+    return pd.DataFrame(new_frames)
 
 
 def render_color_pickers():
@@ -458,7 +462,7 @@ def render_color_pickers():
     return colors
 
 
-@st.cache(show_spinner=False)
+@st.cache_data(show_spinner=False)
 def get_quantized_image(colors):
 
     k = len(colors)

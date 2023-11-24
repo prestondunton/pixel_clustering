@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+streamlit = "*"
+plotly = "*"
+scipy = "*"
+sklearn = "*"
+scikit-learn = "*"
+streamlit-agraph = "==0.0.35"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
