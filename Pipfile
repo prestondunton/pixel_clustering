@@ -6,7 +6,7 @@ name = "pypi"
 [packages]
 streamlit = "*"
 plotly = "*"
-scipy = "*"
+scipy = "==1.11.4"
 sklearn = "*"
 scikit-learn = "*"
 streamlit-agraph = "==0.0.35"
